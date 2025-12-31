@@ -35,26 +35,42 @@ jobs:
           # This block is to safely test if the environement variable has not been set, as it should be by the runner,
           # and then reapply it.
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
-            Write-Host -Object 'The environment variable $env:HAS_TOKEN was not set.';
-            $env:HAS_TOKEN = "${{ env.HAS_TOKEN }}";
+            Write-Warning -Message 'The environment variable $env:HAS_TOKEN was not set.';
+            $env:HAS_TOKEN = '${{ env.HAS_TOKEN }}';
           }
           If ([string]::IsNullOrWhiteSpace($env:ACTION_COMMITS)) {
-            Write-Host -Object 'The environment variable $env:ACTION_COMMITS was not set.';
-            $env:ACTION_COMMITS = "${{ env.ACTION_COMMITS }}";
+            Write-Warning -Message 'The environment variable $env:ACTION_COMMITS was not set.';
+            $env:ACTION_COMMITS = '${{ env.ACTION_COMMITS }}';
+          }
+
+          If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
+            Write-Error -Message 'Environement variable $env:HAS_TOKEN is still null, empty or whitespace!';
+            Exit 1;
+          }
+
+          If ([string]::IsNullOrEmpty($env:ACTION_COMMITS)) {
+            Write-Error -Message 'Environement variable $env:ACTION_COMMITS is still null, empty!';
+            Exit 1;
+          } ElseIf ([string]::IsNullOrWhiteSpace($env:ACTION_COMMITS)) {
+            Write-Error -Message 'Environement variable $env:ACTION_COMMITS is still whitespace!';
+            Exit 1;
+          } Else {
+            Write-Host -Object '$env:ACTION_COMMITS = ';
+            Write-Host -Object $env:ACTION_COMMITS -ForegroundColor Blue;
           }
 
           # Determines if the environement variable $env:TEST_TOKEN has been set or is blank/null.
           [bool] $HasTokenTest = $False;
           If (-not ([bool]::TryParse($env:HAS_TOKEN, [Ref] $HasTokenTest))) {
             If ([string]::IsNullOrEmpty($env:HAS_TOKEN)) {
-              Write-Host -Object "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
-                                ' likely because it was not set.';
+              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
+                                   ' likely because it was not set.';
             } ElseIf ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
-              Write-Host -Object "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                ' it was not properly set and was only whitespace.';
+              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
+                                   ' it was not properly set and was only whitespace.';
             } Else {
-              Write-Host -Object "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
+              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
+                                   " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
             }
           }
 
@@ -62,19 +78,18 @@ jobs:
           [Hashtable] $ActionCommits = ($env:ACTION_COMMITS | ConvertFrom-Json -Depth 100 -AsHashtable -ErrorAction Stop);
 
           # Determines if the last commit was a test commit.
-          [bool] $IsTestPush = ($ActionCommits | Select-Object -First 1 | Select-Object -ExpandProperty 'message'). `
-                                StartsWith('[RELEASE]');
+          [bool] $IsTestPush = (($ActionCommits | Select-Object -First 1 -ErrorAction Stop | Select-Object -ExpandProperty 'message' -ErrorAction Stop) -cmatch '^\[TEST\]');
 
           If (-not $HasTokenTest -or -not $IsTestPush) {
             Write-Error -Message 'Canceling Workflow! (Both false)';
             Exit 1;
           } ElseIf ($HasTokenTest -eq $True -and $IsTestPush -eq $True) {
-            Write-Host -Object 'Successful!';
+            Write-Host -Object 'Successful!' -ForegroundColor Green;
             Exit 0;
           } ElseIf (-not $HasTokenTest -and $IsTestPush -eq $True) {
-            Write-Error -Message 'Canceling Workflow!' (HAS_TOKEN false);
+            Write-Error -Message 'Canceling Workflow! (HAS_TOKEN false)';
             Exit 1;
           } ElseIf ($HasTokenTest -eq $True -and -not $IsTestPush) {
-            Write-Error -Message 'Canceling Workflow!' (Is not test push);
+            Write-Error -Message 'Canceling Workflow! (Is not test push)';
             Exit 1;
           }
