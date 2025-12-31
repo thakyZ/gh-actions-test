@@ -7,6 +7,7 @@ on:
 
 env:
   HAS_TOKEN: ${{ secrets.TEST_TOKEN != '' }}
+  ACTION_COMMITS: ${{ toJSON(github.event.commits) }}
 
 jobs:
   test_case_1:
