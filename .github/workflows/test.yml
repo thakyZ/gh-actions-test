@@ -7,6 +7,7 @@ on:
 
 env:
   HAS_TOKEN: ${{ secrets.TEST_TOKEN != '' }}
+  REQUIRE_TOKEN: false
   ACTION_COMMITS: ${{ toJSON(github.event.commits) }}
 
 jobs:
@@ -177,7 +178,7 @@ jobs:
           }
   test_case_5:
     name: Test Case 5
-    if: always() && ((github.env.NPM_RELEASE != 'false' && github.env.HAS_SECRETS == 'false') || github.env.NPM_RELEASE == 'false') && startsWith(github.event.commits[0].message, '[RELEASE]')
+    if: always() && ((github.env.REQUIRE_TOKEN != 'false' && github.env.HAS_TOKEN == 'false') || github.env.REQUIRE_TOKEN == 'false') && startsWith(github.event.commits[0].message, '[TEST]')
     runs-on: ubuntu-latest
     steps:
       - name: Test Case 5 Step 1
