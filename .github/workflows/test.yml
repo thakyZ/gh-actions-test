@@ -1,6 +1,9 @@
 name: Test environment variables
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   HAS_TOKEN: ${{ secrets.TEST_TOKEN != '' }}
