@@ -34,6 +34,7 @@ jobs:
         shell: pwsh
         env:
           HAS_TOKEN: ${{ env.HAS_TOKEN }}
+          REQUIRE_TOKEN: ${{ env.REQUIRE_TOKEN }}
           ACTION_COMMITS: ${{ toJSON(github.event.commits) }}
         run: |
           # Method `System.String.IsNullOrWhiteSpace(System.String)` Also checks if it is an empty string.
@@ -45,6 +46,12 @@ jobs:
           ${{ env.HAS_TOKEN }}
           '@.Trim();
           }
+          If ([string]::IsNullOrWhiteSpace($env:REQUIRE_TOKEN)) {
+            Write-Warning -Message 'The environment variable $env:REQUIRE_TOKEN was not set.';
+            $env:REQUIRE_TOKEN = @'
+          ${{ env.REQUIRE_TOKEN }}
+          '@.Trim();
+          }
           If ([string]::IsNullOrWhiteSpace($env:ACTION_COMMITS)) {
             Write-Warning -Message 'The environment variable $env:ACTION_COMMITS was not set.';
             $env:ACTION_COMMITS = @'
@@ -54,6 +61,11 @@ jobs:
 
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
             Write-Error -Message 'Environement variable $env:HAS_TOKEN is still null, empty or whitespace!';
+            Exit 1;
+          }
+
+          If ([string]::IsNullOrWhiteSpace($env:REQUIRE_TOKEN)) {
+            Write-Error -Message 'Environement variable $env:REQUIRE_TOKEN is still null, empty or whitespace!';
             Exit 1;
           }
 
@@ -72,14 +84,29 @@ jobs:
           [bool] $HasTokenTest = $False;
           If (-not ([bool]::TryParse($env:HAS_TOKEN, [Ref] $HasTokenTest))) {
             If ([string]::IsNullOrEmpty($env:HAS_TOKEN)) {
-              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
-                                    ' likely because it was not set.';
+              Write-Warning -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
+                                     ' likely because it was not set.';
             } ElseIf ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
-              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                    ' it was not properly set and was only whitespace.';
+              Write-Warning -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
+                                     ' it was not properly set and was only whitespace.';
             } Else {
-              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                    " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
+              Write-Warning -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
+                                     " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
+            }
+          }
+
+          # Determines if the the workflow requires a valid token.
+          [bool] $RequireTokenTest = $False;
+          If (-not ([bool]::TryParse($env:REQUIRE_TOKEN, [Ref] $RequireTokenTest))) {
+            If ([string]::IsNullOrEmpty($env:REQUIRE_TOKEN)) {
+              Write-Error -Message "The environment variable `"`$env:REQUIRE_TOKEN`" failed to parse, this is" + `
+                                   ' likely because it was not set.';
+            } ElseIf ([string]::IsNullOrWhiteSpace($env:REQUIRE_TOKEN)) {
+              Write-Error -Message "The environment variable `"`$env:REQUIRE_TOKEN`" failed to parse, this is likely because" + `
+                                   ' it was not properly set and was only whitespace.';
+            } Else {
+              Write-Error -Message "The environment variable `"`$env:REQUIRE_TOKEN`" failed to parse, this is likely because" + `
+                                   " it was not properly set and was an invalid boolean, got `"$($env:REQUIRE_TOKEN)`".";
             }
           }
 
@@ -89,16 +116,14 @@ jobs:
           # Determines if the last commit was a test commit.
           [bool] $IsTestPush = (($ActionCommits | Select-Object -First 1 -ErrorAction Stop | Select-Object -ExpandProperty 'message' -ErrorAction Stop) -cmatch '^\[TEST\]');
 
-          If (-not $HasTokenTest -or -not $IsTestPush) {
-            Write-Error -Message 'Canceling Workflow! (Both false)';
-            Exit 1;
-          } ElseIf ($HasTokenTest -eq $True -and $IsTestPush -eq $True) {
+          # Simplified from `($HasTokenTest -eq $False -and $RequireTokenTest -eq $True) -eq $False -or $RequireTokenTest -eq $False) -eq $True -and $IsTestPush -eq $True`
+          If (($HasTokenTest -or -not $RequireTokenTest) -and $IsTestPush) {
             Write-Host -Object 'Successful!' -ForegroundColor Green;
             Exit 0;
-          } ElseIf (-not $HasTokenTest -and $IsTestPush -eq $True) {
-            Write-Error -Message 'Canceling Workflow! (HAS_TOKEN false)';
+          } ElseIf (-not $HasTokenTest -and $RequireTokenTest) {
+            Write-Error -Message 'Canceling Workflow! (Requires Token is true and Token Test is false)';
             Exit 1;
-          } ElseIf ($HasTokenTest -eq $True -and -not $IsTestPush) {
+          } ElseIf ($IsTestPush) {
             Write-Error -Message 'Canceling Workflow! (Is not test push)';
             Exit 1;
           }
@@ -119,6 +144,12 @@ jobs:
           ${{ env.HAS_TOKEN }}
           '@.Trim();
           }
+          If ([string]::IsNullOrWhiteSpace($env:REQUIRE_TOKEN)) {
+            Write-Warning -Message 'The environment variable $env:REQUIRE_TOKEN was not set.';
+            $env:REQUIRE_TOKEN = @'
+          ${{ env.REQUIRE_TOKEN }}
+          '@.Trim();
+          }
           If ([string]::IsNullOrWhiteSpace($env:ACTION_COMMITS)) {
             Write-Warning -Message 'The environment variable $env:ACTION_COMMITS was not set.';
             $env:ACTION_COMMITS = @'
@@ -128,6 +159,11 @@ jobs:
 
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
             Write-Error -Message 'Environement variable $env:HAS_TOKEN is still null, empty or whitespace!';
+            Exit 1;
+          }
+
+          If ([string]::IsNullOrWhiteSpace($env:REQUIRE_TOKEN)) {
+            Write-Error -Message 'Environement variable $env:REQUIRE_TOKEN is still null, empty or whitespace!';
             Exit 1;
           }
 
@@ -146,14 +182,29 @@ jobs:
           [bool] $HasTokenTest = $False;
           If (-not ([bool]::TryParse($env:HAS_TOKEN, [Ref] $HasTokenTest))) {
             If ([string]::IsNullOrEmpty($env:HAS_TOKEN)) {
-              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
-                                   ' likely because it was not set.';
+              Write-Warning -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
+                                     ' likely because it was not set.';
             } ElseIf ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
-              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
+              Write-Warning -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
+                                     ' it was not properly set and was only whitespace.';
+            } Else {
+              Write-Warning -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
+                                     " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
+            }
+          }
+
+          # Determines if the the workflow requires a valid token.
+          [bool] $RequireTokenTest = $False;
+          If (-not ([bool]::TryParse($env:REQUIRE_TOKEN, [Ref] $RequireTokenTest))) {
+            If ([string]::IsNullOrEmpty($env:REQUIRE_TOKEN)) {
+              Write-Error -Message "The environment variable `"`$env:REQUIRE_TOKEN`" failed to parse, this is" + `
+                                   ' likely because it was not set.';
+            } ElseIf ([string]::IsNullOrWhiteSpace($env:REQUIRE_TOKEN)) {
+              Write-Error -Message "The environment variable `"`$env:REQUIRE_TOKEN`" failed to parse, this is likely because" + `
                                    ' it was not properly set and was only whitespace.';
             } Else {
-              Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                   " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
+              Write-Error -Message "The environment variable `"`$env:REQUIRE_TOKEN`" failed to parse, this is likely because" + `
+                                   " it was not properly set and was an invalid boolean, got `"$($env:REQUIRE_TOKEN)`".";
             }
           }
 
@@ -163,16 +214,14 @@ jobs:
           # Determines if the last commit was a test commit.
           [bool] $IsTestPush = (($ActionCommits | Select-Object -First 1 -ErrorAction Stop | Select-Object -ExpandProperty 'message' -ErrorAction Stop) -cmatch '^\[TEST\]');
 
-          If (-not $HasTokenTest -or -not $IsTestPush) {
-            Write-Error -Message 'Canceling Workflow! (Both false)';
-            Exit 1;
-          } ElseIf ($HasTokenTest -eq $True -and $IsTestPush -eq $True) {
+          # Simplified from `($HasTokenTest -eq $False -and $RequireTokenTest -eq $True) -eq $False -or $RequireTokenTest -eq $False) -eq $True -and $IsTestPush -eq $True`
+          If (($HasTokenTest -or -not $RequireTokenTest) -and $IsTestPush) {
             Write-Host -Object 'Successful!' -ForegroundColor Green;
             Exit 0;
-          } ElseIf (-not $HasTokenTest -and $IsTestPush -eq $True) {
-            Write-Error -Message 'Canceling Workflow! (HAS_TOKEN false)';
+          } ElseIf (-not $HasTokenTest -and $RequireTokenTest) {
+            Write-Error -Message 'Canceling Workflow! (Requires Token is true and Token Test is false)';
             Exit 1;
-          } ElseIf ($HasTokenTest -eq $True -and -not $IsTestPush) {
+          } ElseIf ($IsTestPush) {
             Write-Error -Message 'Canceling Workflow! (Is not test push)';
             Exit 1;
           }
