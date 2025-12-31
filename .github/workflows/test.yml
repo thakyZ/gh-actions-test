@@ -111,7 +111,7 @@ jobs:
           }
 
           # Determines if the environement variable $env:ACTION_COMMITS has been set or is blank/null.
-          [Hashtable] $ActionCommits = ($env:ACTION_COMMITS | ConvertFrom-Json -Depth 100 -AsHashtable -ErrorAction Stop);
+          [Hashtable[]] $ActionCommits = @($env:ACTION_COMMITS | ConvertFrom-Json -Depth 100 -AsHashtable -ErrorAction Stop);
 
           # Determines if the last commit was a test commit.
           [bool] $IsTestPush = (($ActionCommits | Select-Object -First 1 -ErrorAction Stop | Select-Object -ExpandProperty 'message' -ErrorAction Stop) -cmatch '^\[TEST\]');
@@ -209,7 +209,7 @@ jobs:
           }
 
           # Determines if the environement variable $env:ACTION_COMMITS has been set or is blank/null.
-          [Hashtable] $ActionCommits = ($env:ACTION_COMMITS | ConvertFrom-Json -Depth 100 -AsHashtable -ErrorAction Stop);
+          [Hashtable[]] $ActionCommits = @($env:ACTION_COMMITS | ConvertFrom-Json -Depth 100 -AsHashtable -ErrorAction Stop);
 
           # Determines if the last commit was a test commit.
           [bool] $IsTestPush = (($ActionCommits | Select-Object -First 1 -ErrorAction Stop | Select-Object -ExpandProperty 'message' -ErrorAction Stop) -cmatch '^\[TEST\]');
@@ -227,7 +227,7 @@ jobs:
           }
   test_case_5:
     name: Test Case 5
-    if: always() && ((github.env.REQUIRE_TOKEN != 'false' && github.env.HAS_TOKEN == 'false') || github.env.REQUIRE_TOKEN == 'false') && startsWith(github.event.commits[0].message, '[TEST]')
+    if: always() && (github.env.HAS_TOKEN != 'false' || github.env.REQUIRE_TOKEN == 'false') && startsWith(github.event.commits[0].message, '[TEST]')
     runs-on: ubuntu-latest
     steps:
       - name: Test Case 5 Step 1
