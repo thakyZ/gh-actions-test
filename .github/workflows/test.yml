@@ -175,3 +175,10 @@ jobs:
             Write-Error -Message 'Canceling Workflow! (Is not test push)';
             Exit 1;
           }
+  test_case_5:
+    name: Test Case 5
+    if: always() && ((github.env.NPM_RELEASE != 'false' && github.env.HAS_SECRETS == 'false') || github.env.NPM_RELEASE == 'false') && startsWith(github.event.commits[0].message, '[RELEASE]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Case 5 Step 1
+        run: echo "Successful!"; exit 0;
