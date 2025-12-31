@@ -45,16 +45,16 @@ jobs:
 
           # Determines if the environement variable $env:TEST_TOKEN has been set or is blank/null.
           [bool] $HasTokenTest = $False;
-          If (-not ([bool]::TryParse($env:HAS_TOKEN, [Ref] $HasTokenTest)) {
+          If (-not ([bool]::TryParse($env:HAS_TOKEN, [Ref] $HasTokenTest))) {
             If ([string]::IsNullOrEmpty($env:HAS_TOKEN)) {
               Write-Host -Object "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
-                                 ' likely because it was not set.';
+                                ' likely because it was not set.';
             } ElseIf ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
               Write-Host -Object "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                 ' it was not properly set and was only whitespace.';
+                                ' it was not properly set and was only whitespace.';
             } Else {
               Write-Host -Object "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                 " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
+                                " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
             }
           }
 
@@ -62,19 +62,19 @@ jobs:
           [Hashtable] $ActionCommits = ($env:ACTION_COMMITS | ConvertFrom-Json -Depth 100 -AsHashtable -ErrorAction Stop);
 
           # Determines if the last commit was a test commit.
-          [bool] $IsTestPush = ($ActionCommits | Select-Object -First 1 | Select-Object -ExpandProperty 'message') `
-                                .StartsWith('[RELEASE]');
+          [bool] $IsTestPush = ($ActionCommits | Select-Object -First 1 | Select-Object -ExpandProperty 'message'). `
+                                StartsWith('[RELEASE]');
 
           If (-not $HasTokenTest -or -not $IsTestPush) {
             Write-Error -Message 'Canceling Workflow! (Both false)';
             Exit 1;
-          } ElseIf ($HasTokenTest -eq $True -and $IsTestPush -eq $True)
+          } ElseIf ($HasTokenTest -eq $True -and $IsTestPush -eq $True) {
             Write-Host -Object 'Successful!';
             Exit 0;
-          } ElseIf (-not $HasTokenTest -and $IsTestPush -eq $True)
+          } ElseIf (-not $HasTokenTest -and $IsTestPush -eq $True) {
             Write-Error -Message 'Canceling Workflow!' (HAS_TOKEN false);
             Exit 1;
-          } ElseIf ($HasTokenTest -eq $True -and -not $IsTestPush)
+          } ElseIf ($HasTokenTest -eq $True -and -not $IsTestPush) {
             Write-Error -Message 'Canceling Workflow!' (Is not test push);
             Exit 1;
           }
