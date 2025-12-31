@@ -40,11 +40,15 @@ jobs:
           # and then reapply it.
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
             Write-Warning -Message 'The environment variable $env:HAS_TOKEN was not set.';
-            $env:HAS_TOKEN = '${{ env.HAS_TOKEN }}';
+            $env:HAS_TOKEN = @'
+          ${{ env.HAS_TOKEN }}
+          '@.Trim();
           }
           If ([string]::IsNullOrWhiteSpace($env:ACTION_COMMITS)) {
             Write-Warning -Message 'The environment variable $env:ACTION_COMMITS was not set.';
-            $env:ACTION_COMMITS = '${{ env.ACTION_COMMITS }}';
+            $env:ACTION_COMMITS = @'
+          ${{ env.ACTION_COMMITS }}
+          '@.Trim();
           }
 
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
@@ -68,13 +72,13 @@ jobs:
           If (-not ([bool]::TryParse($env:HAS_TOKEN, [Ref] $HasTokenTest))) {
             If ([string]::IsNullOrEmpty($env:HAS_TOKEN)) {
               Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is" + `
-                                   ' likely because it was not set.';
+                                    ' likely because it was not set.';
             } ElseIf ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
               Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                   ' it was not properly set and was only whitespace.';
+                                    ' it was not properly set and was only whitespace.';
             } Else {
               Write-Error -Message "The environment variable `"`$env:HAS_TOKEN`" failed to parse, this is likely because" + `
-                                   " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
+                                    " it was not properly set and was an invalid boolean, got `"$($env:HAS_TOKEN)`".";
             }
           }
 
@@ -110,11 +114,15 @@ jobs:
           # and then reapply it.
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
             Write-Warning -Message 'The environment variable $env:HAS_TOKEN was not set.';
-            $env:HAS_TOKEN = '${{ env.HAS_TOKEN }}';
+            $env:HAS_TOKEN = @'
+          ${{ env.HAS_TOKEN }}
+          '@.Trim();
           }
           If ([string]::IsNullOrWhiteSpace($env:ACTION_COMMITS)) {
             Write-Warning -Message 'The environment variable $env:ACTION_COMMITS was not set.';
-            $env:ACTION_COMMITS = '${{ env.ACTION_COMMITS }}';
+            $env:ACTION_COMMITS = @'
+          ${{ env.ACTION_COMMITS }}
+          '@.Trim();
           }
 
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
