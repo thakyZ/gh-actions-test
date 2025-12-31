@@ -30,10 +30,10 @@ jobs:
         env:
           HAS_TOKEN: ${{ env.HAS_TOKEN }}
           ACTION_COMMITS: ${{ toJSON(github.event.commits) }}
-        run: >-
+        run: |
           # Method `System.String.IsNullOrWhiteSpace(System.String)` Also checks if it is an empty string.
           # This block is to safely test if the environement variable has not been set, as it should be by the runner,
-          # and then0reapply it.
+          # and then reapply it.
           If ([string]::IsNullOrWhiteSpace($env:HAS_TOKEN)) {
             Write-Host -Object 'The environment variable $env:HAS_TOKEN was not set.';
             $env:HAS_TOKEN = "${{ env.HAS_TOKEN }}";
